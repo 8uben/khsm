@@ -60,14 +60,6 @@ RSpec.describe Game, type: :model do
       expect(game_w_questions.status).to eq(:in_progress)
       expect(game_w_questions.finished?).to be_falsey
     end
-
-    it '.current_game_question' do
-      expect(game_w_questions.current_game_question.level).to eq(game_w_questions.current_level)
-    end
-
-    it '.previous_level' do
-      expect(game_w_questions.previous_level).to eq(-1)
-    end
   end
 
   context '.status' do
@@ -95,6 +87,19 @@ RSpec.describe Game, type: :model do
 
     it ':money' do
       expect(game_w_questions.status).to eq(:money)
+    end
+  end
+
+  describe '#current_game_question' do
+    it 'should return current question' do
+      expect(game_w_questions.current_game_question.question.text).to eq('В каком году была космическая одиссея 136?')
+    end
+  end
+
+  describe '#previous_level' do
+    it 'should return question previous level' do
+      game_w_questions.current_level = 10
+      expect(game_w_questions.previous_level).to eq(9)
     end
   end
 
