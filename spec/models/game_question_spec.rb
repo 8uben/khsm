@@ -59,6 +59,17 @@ RSpec.describe GameQuestion, type: :model do
         expect(help_hash[:fifty_fifty].size).to eq(2)
       end
     end
+
+    describe '#add_friend_call' do
+      it 'should tell correct key' do
+        expect(help_hash).not_to include(:friend_call)
+
+        game_question.add_friend_call
+
+        expect(help_hash).to include(:friend_call)
+        expect(help_hash[:friend_call]).to match(/[а-яА-Я]+ считает, что это вариант [ABCD]{1}\z/)
+      end
+    end
   end
 
   context 'delegate methods' do
