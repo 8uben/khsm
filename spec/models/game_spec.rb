@@ -92,7 +92,7 @@ RSpec.describe Game, type: :model do
 
   describe '#current_game_question' do
     it 'should return current question' do
-      expect(game_w_questions.current_game_question.question.text).to eq('В каком году была космическая одиссея 136?')
+      expect(game_w_questions.current_game_question).to eq(game_w_questions.game_questions.first)
     end
   end
 
