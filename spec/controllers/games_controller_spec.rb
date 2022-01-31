@@ -91,5 +91,53 @@ RSpec.describe GamesController, type: :controller do
       expect(game.current_game_question.help_hash[:audience_help].keys).to contain_exactly('a', 'b', 'c', 'd')
       expect(response).to redirect_to(game_path(game))
     end
+
+
+    describe '#show' do
+      it "should don't show another user game" do
+        another_game = FactoryBot.create(:game_with_questions, user: FactoryBot.create(:user))
+        get :show, id: another_game.id
+        game = assigns(:game)
+        expect(game).to be_nil
+
+        expect(response.status).to eq(302)
+        expect(response).to redirect_to(root_path)
+        expect(flash[:alert]).to be
+      end
+    end
+
+    describe '#take_money' do
+      it 'should finish game and get money' do
+        game_w_questions.update(current_level: 2)
+
+        put :take_money, id: game_w_questions.id
+        game = assigns(:game)
+
+        expect(game.prize).to eq(200)
+        expect(game.is_failed).to be(false)
+        expect(game.status).to be(:money)
+        expect(response.status).to eq(302)
+        expect(response).to redirect_to(user_path(user))
+
+        user.reload
+
+        expect(user.balance).to eq(200)
+        expect(flash[:warning]).to be
+      end
+    end
+
+    describe '#create' do
+      it 'as second game' do
+        expect(game_w_questions.finished?).to be_falsey
+
+        # отправляем запрос на создание, убеждаемся что новых Game не создалось
+        expect { post :create }.to change(Game, :count).by(0)
+        game = assigns(:game)
+
+        expect(game).to be_nil
+        expect(response).to redirect_to(game_path(game_w_questions))
+        expect(flash[:alert]).to be
+      end
+    end
   end
 end
