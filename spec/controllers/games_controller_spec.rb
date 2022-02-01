@@ -185,5 +185,33 @@ RSpec.describe GamesController, type: :controller do
         expect(flash[:alert]).to be
       end
     end
+
+    describe '#help' do
+      context 'use fifty_fifty help' do
+        before do
+          expect(game_w_questions.finished?).to be(false)
+
+          put :help, id: game_w_questions.id, help_type: :fifty_fifty
+        end
+
+        let(:game) { assigns(:game) }
+
+        it 'should show info flash message' do
+          expect(flash[:info]).to be
+        end
+
+        it 'should response status 302' do
+          expect(response.status).to eq(302)
+        end
+
+        it 'should redirect to game path' do
+          expect(response).to redirect_to(game_path(game))
+        end
+
+        it 'should redirect to game path' do
+           expect(game_w_questions.current_game_question.help_hash).to include(:fifty_fifty)
+        end
+      end
+    end
   end
 end
