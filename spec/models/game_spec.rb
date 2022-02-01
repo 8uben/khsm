@@ -103,47 +103,80 @@ RSpec.describe Game, type: :model do
     end
   end
 
-  context '.answer_current_question!' do
-    let(:letter) do
+  describe '#answer_current_question!' do
+    let(:level) { game_w_questions.current_game_question.level }
+    let!(:status) { game_w_questions.status }
+
+    let!(:correct_answer_key) do
       game_w_questions.current_game_question.correct_answer_key
     end
 
-    let(:bad_letter) do
-      %w[a b c d].reject { |w| w == letter }.sample
-    end
+    let(:last_level) { Game::FIREPROOF_LEVELS.max }
 
-    it 'correct answer' do
-      expect(game_w_questions.answer_current_question!(letter)).to be_truthy
-      expect(game_w_questions.current_level).to eq(1)
-    end
+    context 'when answer is correct' do
+      before { game_w_questions.answer_current_question!(correct_answer_key) }
 
-    it 'incorrect answer' do
-      expect(game_w_questions.answer_current_question!(bad_letter)).to be_falsey
-      expect(game_w_questions.current_level).to eq(0)
-    end
+      context 'and question is last' do
+        before do
+          game_w_questions.current_level = last_level
+          game_w_questions.answer_current_question!(correct_answer_key)
+        end
 
-    context 'last question' do
-      before(:each) do
-        game_w_questions.current_level = 14
+        it 'should assign final prize' do
+          expect(game_w_questions.prize).to eq(Game::PRIZES.max)
+        end
+
+        it 'should finish game with status won' do
+          expect(game_w_questions.finished_at).to be_truthy
+          expect(game_w_questions.is_failed).to be(false)
+          expect(game_w_questions.status).to eq(:won)
+        end
       end
 
-      it 'if correct answer' do
-        expect(game_w_questions.answer_current_question!(letter)).to be_truthy
-        expect(game_w_questions.is_failed).to be_falsey
-        expect(game_w_questions.prize).to eq(1000000)
+      context 'and question is not last' do
+        it 'should increase the current level by 1' do
+          expect(level).to eq(1)
+        end
+
+        it 'should continue game' do
+          expect(game_w_questions.finished_at).to be_falsey
+          expect(status).to eq(:in_progress)
+        end
       end
 
-      it 'if incorrect answer' do
-        expect(game_w_questions.answer_current_question!(bad_letter)).to be_falsey
-        expect(game_w_questions.is_failed).to be_truthy
-        expect(game_w_questions.prize).to eq(32000)
+      context 'and time is out ' do
+        before do
+          game_w_questions.created_at = 1.hour.ago
+          game_w_questions.answer_current_question!(correct_answer_key)
+        end
+
+        it 'should finish game with status timeout' do
+          expect(game_w_questions.finished_at).to be_truthy
+          expect(game_w_questions.is_failed).to be(true)
+          expect(game_w_questions.status).to eq(:timeout)
+        end
       end
     end
 
-    context 'time is over' do
-      it 'answer after time out' do
-        game_w_questions.created_at = 1.hour.ago
-        expect(game_w_questions.answer_current_question!(letter)).to be_falsey
+    context 'when answer is wrong' do
+      let!(:wrong_answer_key) do
+        %w[a b c d].reject { |w| w == correct_answer_key }.sample
+      end
+
+      before do
+        game_w_questions.current_level = last_level
+        game_w_questions.answer_current_question!(wrong_answer_key)
+      end
+
+      it 'should finish game with status fail' do
+        expect(game_w_questions.finished_at).to be_truthy
+        expect(game_w_questions.is_failed).to be(true)
+        expect(game_w_questions.status).to eq(:fail)
+      end
+
+      it 'should get garant prize' do
+        expect(game_w_questions.is_failed).to be(true)
+        expect(game_w_questions.prize).to eq(32_000)
       end
     end
   end
