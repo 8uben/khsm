@@ -88,16 +88,36 @@ RSpec.describe GamesController, type: :controller do
       expect(response).to render_template('show') # и отрендерить шаблон show
     end
 
-    # юзер отвечает на игру корректно - игра продолжается
-    it 'answers correct' do
-      # передаем параметр params[:letter]
-      put :answer, id: game_w_questions.id, letter: game_w_questions.current_game_question.correct_answer_key
-      game = assigns(:game)
+    describe '#answer' do
+      let(:letter) { game_w_questions.current_game_question.correct_answer_key }
 
-      expect(game.finished?).to be_falsey
-      expect(game.current_level).to be > 0
-      expect(response).to redirect_to(game_path(game))
-      expect(flash.empty?).to be_truthy # удачный ответ не заполняет flash
+      context 'correct answer' do
+        # юзер отвечает на игру корректно - игра продолжается
+        it 'should continue game' do
+          # передаем параметр params[:letter]
+          put :answer, id: game_w_questions.id, letter: letter
+          game = assigns(:game)
+
+          expect(game.finished?).to be(false)
+          expect(game.current_level).to be > 0
+          expect(response).to redirect_to(game_path(game))
+          expect(flash.empty?).to be_truthy # удачный ответ не заполняет flash
+        end
+      end
+
+      context 'inccorect answer' do
+        let(:bad_letter) { %w[a b c d].reject { |w| w == letter }.sample }
+
+        it 'should finish game' do
+          patch :answer, id: game_w_questions.id, letter: bad_letter
+          game = assigns(:game)
+
+          expect(flash[:alert]).to be
+          expect(game.finished?).to be(true)
+          expect(response.status).to eq(302)
+          expect(response).to redirect_to(user)
+        end
+      end
     end
 
     # тест на отработку "помощи зала"
