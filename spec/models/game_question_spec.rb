@@ -8,7 +8,7 @@ RSpec.describe GameQuestion, type: :model do
 
   # задаем локальную переменную game_question, доступную во всех тестах этого сценария
   # она будет создана на фабрике заново для каждого блока it, где она вызывается
-  let(:game_question) { FactoryBot.create(:game_question, a: 2, b: 1, c: 4, d: 3) }
+  let(:game_question) { create(:game_question, a: 2, b: 1, c: 4, d: 3) }
 
   # группа тестов на игровое состояние объекта вопроса
   context 'game status' do
@@ -47,18 +47,20 @@ RSpec.describe GameQuestion, type: :model do
     end
   end
 
-  context 'delegate methods' do
-    it '.text' do
+  describe '#text' do
+    it 'should return question level' do
       expect(game_question.text).to eq(game_question.question.text)
     end
+  end
 
-    it '.level' do
+  describe '#level' do
+    it 'should return current question level' do
       expect(game_question.level).to eq(game_question.question.level)
     end
   end
 
-  context 'correct answer' do
-    it '.correct_answer_key' do
+  describe '#correct_answer_key' do
+    it 'should return correct answer key' do
       expect(game_question.correct_answer_key).to eq('b')
     end
   end
