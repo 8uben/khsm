@@ -35,15 +35,40 @@ RSpec.describe GameQuestion, type: :model do
   #
 
   context 'user helpers' do
-    it 'correct audience_help' do
-      expect(game_question.help_hash).not_to include(:audience_help)
+    let(:help_hash) { game_question.help_hash }
 
-      game_question.add_audience_help
+    describe '#add_audience_help' do
+      it 'should show audience help' do
+        expect(help_hash).not_to include(:audience_help)
 
-      expect(game_question.help_hash).to include(:audience_help)
+        game_question.add_audience_help
 
-      ah = game_question.help_hash[:audience_help]
-      expect(ah.keys).to contain_exactly('a', 'b', 'c', 'd')
+        expect(help_hash).to include(:audience_help)
+        expect(help_hash[:audience_help].keys).to contain_exactly('a', 'b', 'c', 'd')
+      end
+    end
+
+    describe '#add_fifty_fifty' do
+      it 'should stay correct key and one inccorect key' do
+        expect(help_hash).not_to include(:fifty_fifty)
+
+        game_question.add_fifty_fifty
+
+        expect(help_hash).to include(:fifty_fifty)
+        expect(help_hash[:fifty_fifty]).to include(game_question.correct_answer_key)
+        expect(help_hash[:fifty_fifty].size).to eq(2)
+      end
+    end
+
+    describe '#add_friend_call' do
+      it 'should tell correct key' do
+        expect(help_hash).not_to include(:friend_call)
+
+        game_question.add_friend_call
+
+        expect(help_hash).to include(:friend_call)
+        expect(help_hash[:friend_call]).to match(/[а-яА-Я]+ считает, что это вариант [ABCD]{1}\z/)
+      end
     end
   end
 
@@ -62,6 +87,20 @@ RSpec.describe GameQuestion, type: :model do
   describe '#correct_answer_key' do
     it 'should return correct answer key' do
       expect(game_question.correct_answer_key).to eq('b')
+    end
+  end
+
+  describe '#help_hash' do
+    it 'should return hash with help keys' do
+      helps = game_question.help_hash
+
+      expect(helps).not_to contain_exactly(:fifty_fifty, :audience_help, :friend_call)
+
+      game_question.add_fifty_fifty
+      game_question.add_audience_help
+      game_question.add_friend_call
+
+      expect(helps.keys).to contain_exactly(:fifty_fifty, :audience_help, :friend_call)
     end
   end
 end
